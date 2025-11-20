@@ -1,0 +1,29 @@
+[package]
+name = "local-share"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Web Framework y Runtime
+axum = { version = "0.7", features = ["macros", "multipart"] }
+tokio = { version = "1", features = ["full"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["fs", "trace"] }
+
+# Serialización (para listar archivos en JSON si hiciera falta)
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Argumentos de línea de comando
+clap = { version = "4", features = ["derive"] }
+
+# Logging y Tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Streaming y Compresión (La clave para las carpetas)
+async_zip = { version = "0.0.17", features = ["tokio", "deflate"] }
+tokio-util = { version = "0.7", features = ["io", "compat"] }
+futures = "0.3" # Utilidades para streams
+anyhow = "1.0" # Manejo de errores simplificado
+bytes = "1"
