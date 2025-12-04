@@ -27,3 +27,4 @@ tokio-util = { version = "0.7", features = ["io", "compat"] }
 futures = "0.3" # Utilidades para streams
 anyhow = "1.0" # Manejo de errores simplificado
 bytes = "1"
+humansize = "2.1.3"

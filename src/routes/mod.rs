@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 mod download;
 mod list;
+mod upload;
 
 pub fn app_router() -> Router<Arc<AppState>> {
     Router::new()
@@ -20,4 +21,7 @@ pub fn app_router() -> Router<Arc<AppState>> {
         
         // Ruta para descargar
         .route("/download/*path", get(download::download_handler))
+
+        // Ruta para subir archivos
+        .route("/upload", axum::routing::post(upload::upload_handler))
 }

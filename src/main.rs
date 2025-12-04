@@ -19,6 +19,10 @@ struct Args {
     /// El puerto donde correrá el servidor
     #[arg(short = 'P', long, default_value_t = 3000)]
     port: u16,
+
+    /// Tamaño máximo de subida en MB
+    #[arg(short = 'S', long, default_value_t = 10)]
+    max_upload_size: u64,
 }
 
 // Estado compartido que pasaremos a todos los handlers (endpoints)
@@ -26,6 +30,7 @@ struct Args {
 #[derive(Clone)]
 pub struct AppState {
     pub base_path: PathBuf,
+    pub max_upload_size: u64,
 }
 
 #[tokio::main]
@@ -54,7 +59,10 @@ async fn main() {
     tracing::info!("Servidor escuchando en http://0.0.0.0:{}", args.port);
 
     // 3. Crear el estado compartido
-    let state = Arc::new(AppState { base_path });
+    let state = Arc::new(AppState { 
+        base_path,
+        max_upload_size: args.max_upload_size * 1024 * 1024, // Convertir a bytes
+    });
 
     // 4. Configurar el Router
     // Aquí es donde conectaremos nuestros módulos de rutas más adelante.
@@ -62,6 +70,7 @@ async fn main() {
     let app = Router::new()
         .route("/health", get(|| async { "Servidor activo" }))
         .merge(routes::app_router()) // Descomentaremos esto cuando creemos el módulo routes
+        .layer(axum::extract::DefaultBodyLimit::max((args.max_upload_size * 1024 * 1024) as usize))
         .with_state(state);
 
     // 5. Levantar el servidor
