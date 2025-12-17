@@ -10,6 +10,15 @@ tokio = { version = "1", features = ["full"] }
 tower = "0.4"
 tower-http = { version = "0.5", features = ["fs", "trace"] }
 
+# Replaces standard serving for TLS support
+axum-server = { version = "0.7", features = ["tls-rustls"] }
+
+# For generating self-signed certs on the fly (The "Antigravity" feature)
+rcgen = "0.11"
+
+# For handling Basic Auth headers (Base64 decoding)
+base64 = "0.21"
+
 # Serialización (para listar archivos en JSON si hiciera falta)
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

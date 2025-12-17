@@ -5,7 +5,7 @@ use axum::{
     http::StatusCode,
 };
 use std::sync::Arc;
-use std::path::PathBuf;
+
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 
