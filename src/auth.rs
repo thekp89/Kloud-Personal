@@ -44,5 +44,5 @@ pub async fn auth_middleware(
         .body(Body::empty())
         .unwrap();
 
-    Err(response.status())
+    Ok(response)
 }
