@@ -115,18 +115,61 @@ pub async fn start_server(args: Args) {
     // Configurar TLS
     let tls_config = get_tls_config(&args).await;
 
+    // --- Identity & Discovery ---
+    let local_ip = crate::utils::net::get_local_ip();
+    let protocol = if tls_config.is_some() { "https" } else { "http" };
+    
+    // Start mDNS in background
+    // We check if it is safe to spawn. In CLI mode, main returns when server finishes,
+    // so dropping the handle when this scope ends might be premature if we didn't use `tokio::spawn` inside `register_service`.
+    // But `register_service` calls `tokio::spawn` internally and returns a handle to it.
+    // If we drop the handle, the task continues unless we explicitly abort it.
+    // So we can just let it run.
+    let _mdns_service = crate::utils::mdns::register_service(args.port, "local-share", tls_config.is_some());
+
+    // Build Connection URL
+    let full_url = crate::utils::net::build_connection_url(
+        tls_config.is_some(),
+        &local_ip,
+        args.port,
+        args.username.as_deref(),
+        args.password.as_deref(),
+        false, // Don't include credentials in CLI text output by default for security, or maybe we want to?
+               // The user requested a toggle in GUI. For CLI, maybe just base URL.
+               // Let's print the base URL for the text and maybe the autologin one for QR?
+               // User said: "Si TLS está activo -> https; si Auth está activa -> incrustar credenciales (opcional por seguridad) o solo la base"
+    );
+
+    // For QR, it is convenient to include credentials if present, but risks security.
+    // Let's generate the QR with credentials if they exist, but maybe print a warning.
+    // Or stick to the plan: "Mitigación: Podrías añadir un "toggle" (interruptor) en la GUI"
+    // For CLI, let's use the safer base URL for now unless we want to add a flag. 
+    // Wait, the user prompt implies: "El objetivo es convertir la "Cadena de Conexión" en una matriz...".
+    // Let's use the base full_url without auth for now to be safe, or check if we want to be fancy.
+    // Let's stick to what `build_connection_url` does. I passed `false` above.
+    
+    tracing::info!("--- Local Share v0.1.0 ---");
+    tracing::info!("Local IP Detected: {}", local_ip);
+    tracing::info!("Service advertised as: local-share.local");
+    tracing::info!("Connection URL: {}", full_url);
+    
+    // Generate QR
+    if let Ok(qr_code) = crate::utils::qr::generate_ascii_qr(&full_url) {
+        println!("\nScan this QR code to connect:\n{}", qr_code);
+    } else {
+        tracing::warn!("Could not generate QR code.");
+    }
+
     let addr = SocketAddr::from(([0, 0, 0, 0], args.port));
     
     if let Some(config) = tls_config {
-        tracing::info!("Compartiendo carpeta: {:?} (HTTPS)", base_path);
-        tracing::info!("Servidor escuchando en https://0.0.0.0:{}", args.port);
+        tracing::info!("Server listening on {}://0.0.0.0:{}", protocol, args.port);
         axum_server::bind_rustls(addr, config)
             .serve(app.into_make_service())
             .await
             .unwrap();
     } else {
-        tracing::info!("Compartiendo carpeta: {:?} (HTTP)", base_path);
-        tracing::info!("Servidor escuchando en http://0.0.0.0:{}", args.port);
+        tracing::info!("Server listening on {}://0.0.0.0:{}", protocol, args.port);
         let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
         axum::serve(listener, app).await.unwrap();
     }

@@ -14,7 +14,12 @@ pub struct LocalShareApp {
     
     // Runtime State
     server_handle: Option<JoinHandle<()>>,
+    mdns_handle: Option<crate::utils::mdns::MdnsGuard>,
     status_msg: String,
+    
+    // QR Code
+    qr_texture: Option<egui::TextureHandle>,
+    show_auth_in_qr: bool,
 }
 
 impl Default for LocalShareApp {
@@ -27,7 +32,10 @@ impl Default for LocalShareApp {
             username: "admin".to_string(),
             password: "password".to_string(),
             server_handle: None,
+            mdns_handle: None,
             status_msg: "Ready".to_string(),
+            qr_texture: None,
+            show_auth_in_qr: false,
         }
     }
 }
@@ -37,7 +45,7 @@ impl LocalShareApp {
         Default::default()
     }
 
-    fn start_server(&mut self) {
+    fn start_server(&mut self, ctx: &egui::Context) {
         if self.server_handle.is_some() {
             return;
         }
@@ -53,7 +61,7 @@ impl LocalShareApp {
         let args = Args {
             path: self.path.clone(),
             port,
-            max_upload_size: 10, // Default fixed for GUI, could be added
+            max_upload_size: 10,
             tls: self.tls_enabled,
             cert: None,
             key: None,
@@ -63,6 +71,14 @@ impl LocalShareApp {
 
         self.status_msg = format!("Running on port {}", port);
         
+        // --- Identity & Discovery ---
+        // 1. mDNS
+        let mdns = crate::utils::mdns::register_service(port, "local-share", self.tls_enabled);
+        self.mdns_handle = Some(mdns);
+
+        // 2. Generate QR
+        self.update_qr_code(ctx);
+
         // Spawn server task
         let handle = tokio::spawn(async move {
             server::start_server(args).await;
@@ -71,11 +87,40 @@ impl LocalShareApp {
         self.server_handle = Some(handle);
     }
 
+    fn update_qr_code(&mut self, ctx: &egui::Context) {
+        // Regenerate QR based on current settings
+        // Only if we have valid settings to generate a URL
+         let port = match self.port.parse::<u16>() {
+            Ok(p) => p,
+            Err(_) => return,
+        };
+        
+        let local_ip = crate::utils::net::get_local_ip();
+        
+        let url = crate::utils::net::build_connection_url(
+            self.tls_enabled,
+            &local_ip,
+            port,
+            Some(&self.username),
+            Some(&self.password),
+            self.show_auth_in_qr && self.auth_enabled,
+        );
+
+        if let Ok((w, h, rgb)) = crate::utils::qr::generate_qr_image(&url) {
+             let image = egui::ColorImage::from_rgb([w as usize, h as usize], &rgb);
+             self.qr_texture = Some(ctx.load_texture("qr_code", image, Default::default()));
+        }
+    }
+
     fn stop_server(&mut self) {
         if let Some(handle) = self.server_handle.take() {
             handle.abort();
-            self.status_msg = "Stopped".to_string();
         }
+        // dropping the guard stops the service
+        self.mdns_handle = None;
+        
+        self.status_msg = "Stopped".to_string();
+        self.qr_texture = None;
     }
 }
 
@@ -132,7 +177,7 @@ impl eframe::App for LocalShareApp {
             ui.horizontal(|ui| {
                 if self.server_handle.is_none() {
                     if ui.button("Start Server").clicked() {
-                        self.start_server();
+                        self.start_server(ctx);
                     }
                 } else {
                     if ui.button("Stop Server").clicked() {
@@ -141,6 +186,23 @@ impl eframe::App for LocalShareApp {
                     ui.spinner();
                 }
             });
+
+            // QR Panel
+            if self.server_handle.is_some() {
+                ui.add_space(20.0);
+                ui.separator();
+                ui.heading("Connect Mobile");
+                
+                if self.auth_enabled {
+                    if ui.checkbox(&mut self.show_auth_in_qr, "Include Credentials in QR").changed() {
+                        self.update_qr_code(ctx);
+                    }
+                }
+
+                if let Some(texture) = &self.qr_texture {
+                    ui.image((texture.id(), texture.size_vec2()));
+                }
+            }
 
             ui.label(&self.status_msg);
             
