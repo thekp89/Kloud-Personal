@@ -5,6 +5,7 @@ use std::sync::Arc;
 mod download;
 mod list;
 mod upload;
+mod assets;
 
 pub fn app_router() -> Router<Arc<AppState>> {
     Router::new()
@@ -24,4 +25,7 @@ pub fn app_router() -> Router<Arc<AppState>> {
 
         // Ruta para subir archivos
         .route("/upload", axum::routing::post(upload::upload_handler))
+
+        // Ruta para assets estáticos
+        .route("/assets/*path", get(assets::assets_handler))
 }

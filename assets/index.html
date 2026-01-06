@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Share Horizon</title>
+    <link rel="stylesheet" href="/assets/css/pico.min.css">
+    <style>
+        :root {
+            --pico-font-size: 100%;
+        }
+        .grid {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .file-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--pico-muted-border-color);
+        }
+        .file-list li:last-child {
+            border-bottom: none;
+        }
+        .muted { color: var(--pico-muted-color); }
+        dialog article {
+            max-width: 90vw;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <header class="container">
+        <nav>
+            <ul>
+                <li><strong>Local Share</strong></li>
+            </ul>
+            <ul>
+                <li><a href="#" onclick="document.getElementById('file-upload').click()">Upload</a></li>
+                <!-- Hidden input for upload -->
+                <input type="file" id="file-upload" multiple style="display: none" onchange="handleUpload(this.files)">
+            </ul>
+        </nav>
+        <nav aria-label="breadcrumb" id="breadcrumbs">
+            <!-- Breadcrumbs injected here -->
+        </nav>
+    </header>
+
+    <main class="container">
+        <ul id="file-list" class="file-list">
+            <!-- File list injected here -->
+            <li aria-busy="true">Loading files...</li>
+        </ul>
+    </main>
+
+    <dialog id="preview-modal">
+        <article>
+            <header>
+                <button aria-label="Close" rel="prev" id="close-modal"></button>
+                <p>Preview</p>
+            </header>
+            <div id="preview-content">
+                <!-- Preview content here -->
+            </div>
+        </article>
+    </dialog>
+
+    <script>
+        // Upload Handler (Simple version)
+        async function handleUpload(files) {
+            if (!files.length) return;
+            // Get current path from history or URL
+            const urlParams = new URLSearchParams(window.location.search);
+            // This is tricky in SPA. Ideally we track currentPath in a variable or read it from URL.
+            // For now, let's assume the URL reflects the path: /list/subdir/
+             const fullPath = window.location.pathname.replace('/list', '') || '/';
+             
+             // ... Upload logic (reusing logic from previous version slightly modified for SPA)
+             // For this MVP, let's just alert
+             alert(`Uploading ${files.length} files to ${fullPath}... (Implementation pending completion of full migration)`);
+             
+             // ACTUAL IMPLEMENTATION todo: call /upload endpoint.
+        }
+    </script>
+    <script src="/assets/js/app.js"></script>
+    <script>
+        // Initial Data Injection Placeholder
+        // The Rust backend will replace this line with actual JSON data
+        window.INITIAL_DATA = __INITIAL_DATA__; 
+    </script>
+</body>
+</html>

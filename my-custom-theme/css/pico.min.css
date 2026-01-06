@@ -1,0 +1,4 @@
+@charset "UTF-8";/*!
+ * Pico CSS ✨ v2.1.1 (https://picocss.com)
+ * Copyright 2019-2025 - Licensed under MIT
+ :root{--pico-font-family:monospace;--pico-background-color:#000;--pico-color:#0f0}body{background-color:var(--pico-background-color);color:var(--pico-color);font-family:var(--pico-font-family);padding:2rem}h1{color:#ff00ff;border-bottom:2px dashed #0f0}a{color:#0ff;text-decoration:none;text-transform:uppercase}a:hover{background-color:#0ff;color:#000}table{width:100%;border:1px solid #0f0;margin-top:20px}td,th{padding:10px;border:1px solid #333}tr:nth-child(even){background-color:#111}

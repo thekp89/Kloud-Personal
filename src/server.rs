@@ -41,6 +41,14 @@ pub struct Args {
     /// Contraseña para autenticación básica
     #[arg(short = 'w', long)]
     pub password: Option<String>,
+
+    /// Ruta a una carpeta con archivos CSS/HTML personalizados
+    #[arg(long)]
+    pub theme: Option<PathBuf>,
+
+    /// Exportar el tema por defecto a una carpeta y salir
+    #[arg(long)]
+    pub dump_theme: Option<PathBuf>,
 }
 
 // Estado compartido
@@ -48,6 +56,7 @@ pub struct Args {
 pub struct AppState {
     pub base_path: PathBuf,
     pub max_upload_size: u64,
+    pub theme_path: Option<PathBuf>,
 }
 
 async fn get_tls_config(args: &Args) -> Option<RustlsConfig> {
@@ -95,6 +104,7 @@ pub async fn start_server(args: Args) {
     let state = Arc::new(AppState { 
         base_path: base_path.clone(),
         max_upload_size: args.max_upload_size * 1024 * 1024, // Convertir a bytes
+        theme_path: args.theme.clone(),
     });
 
     let mut app = Router::new()

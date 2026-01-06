@@ -1,9 +1,10 @@
 use clap::Parser;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-mod error;
-mod routes;
 mod utils;
+mod routes;
+mod error;
+mod assets;
 mod auth;
 mod server;
 mod gui;
@@ -36,6 +37,36 @@ async fn main() {
         // Modo CLI (Si hay argumentos)
         tracing::info!("Iniciando en modo CLI...");
         let args = server::Args::parse();
+
+        // Check for dump_theme
+        if let Some(path) = &args.dump_theme {
+            tracing::info!("Dumping default theme to: {:?}", path);
+            if let Err(e) = std::fs::create_dir_all(path) {
+                eprintln!("Error creating directory: {}", e);
+                std::process::exit(1);
+            }
+
+            for file_path in assets::Assets::iter() {
+                let embedded_file = assets::Assets::get(&file_path).unwrap();
+                let output_path = path.join(file_path.as_ref());
+                
+                if let Some(parent) = output_path.parent() {
+                    if let Err(e) = std::fs::create_dir_all(parent) {
+                         eprintln!("Error creating subdirectory {:?}: {}", parent, e);
+                         continue;
+                    }
+                }
+
+                if let Err(e) = std::fs::write(&output_path, embedded_file.data) {
+                    eprintln!("Error writing file {:?}: {}", output_path, e);
+                } else {
+                    println!("Extracted: {:?}", output_path);
+                }
+            }
+            println!("Theme dumped successfully.");
+            return;
+        }
+
         server::start_server(args).await;
     }
 }

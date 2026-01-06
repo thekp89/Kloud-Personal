@@ -11,6 +11,8 @@ pub struct LocalShareApp {
     auth_enabled: bool,
     username: String,
     password: String,
+    theme_enabled: bool,
+    theme_path: Option<PathBuf>,
     
     // Runtime State
     server_handle: Option<JoinHandle<()>>,
@@ -31,6 +33,8 @@ impl Default for LocalShareApp {
             auth_enabled: false,
             username: "admin".to_string(),
             password: "password".to_string(),
+            theme_enabled: false,
+            theme_path: None,
             server_handle: None,
             mdns_handle: None,
             status_msg: "Ready".to_string(),
@@ -67,6 +71,8 @@ impl LocalShareApp {
             key: None,
             username: if self.auth_enabled { Some(self.username.clone()) } else { None },
             password: if self.auth_enabled { Some(self.password.clone()) } else { None },
+            theme: if self.theme_enabled { self.theme_path.clone() } else { None },
+            dump_theme: None,
         };
 
         self.status_msg = format!("Running on port {}", port);
@@ -166,6 +172,33 @@ impl eframe::App for LocalShareApp {
                         ui.label("Password:");
                         ui.text_edit_singleline(&mut self.password);
                     });
+                });
+            }
+
+            ui.add_space(20.0);
+            ui.separator();
+            ui.add_space(10.0);
+            
+            // Theming
+            ui.heading("Theming");
+            ui.checkbox(&mut self.theme_enabled, "Use Custom Theme");
+            if self.theme_enabled {
+                 ui.indent("theme_indent", |ui| {
+                    ui.horizontal(|ui| {
+                        let path_str = self.theme_path.as_ref()
+                            .map(|p| p.to_string_lossy().to_string())
+                            .unwrap_or_else(|| "None".to_string());
+                        
+                        ui.label("Theme Path:");
+                        ui.label(path_str);
+                        
+                        if ui.button("Select Theme Folder").clicked() {
+                            if let Some(path) = rfd::FileDialog::new().pick_folder() {
+                                self.theme_path = Some(path);
+                            }
+                        }
+                    });
+                    ui.small("Select a folder containing 'index.html', 'css/', etc.");
                 });
             }
 

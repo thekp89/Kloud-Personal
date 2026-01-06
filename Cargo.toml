@@ -49,3 +49,7 @@ mdns-sd = "0.10"
 
 # QR Code Generation
 qrcode = "0.14"
+
+# Embedded Assets
+rust-embed = "8.0"
+mime_guess = "2.0"
