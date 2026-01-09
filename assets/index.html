@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,25 +10,33 @@
         :root {
             --pico-font-size: 100%;
         }
+
         .grid {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
+
         .file-list li {
             padding: 10px 0;
             border-bottom: 1px solid var(--pico-muted-border-color);
         }
+
         .file-list li:last-child {
             border-bottom: none;
         }
-        .muted { color: var(--pico-muted-color); }
+
+        .muted {
+            color: var(--pico-muted-color);
+        }
+
         dialog article {
             max-width: 90vw;
             width: 100%;
         }
     </style>
 </head>
+
 <body>
     <header class="container">
         <nav>
@@ -36,6 +45,7 @@
             </ul>
             <ul>
                 <li><a href="#" onclick="document.getElementById('file-upload').click()">Upload</a></li>
+                <li><a href="#" onclick="toggleNotepad()">Notepad</a></li>
                 <!-- Hidden input for upload -->
                 <input type="file" id="file-upload" multiple style="display: none" onchange="handleUpload(this.files)">
             </ul>
@@ -64,6 +74,31 @@
         </article>
     </dialog>
 
+    <dialog id="notepad-modal">
+        <article style="max-width: 800px;">
+            <header>
+                <button aria-label="Close" rel="prev"
+                    onclick="document.getElementById('notepad-modal').close()"></button>
+                <strong>Live Notepad</strong> <small id="notepad-status" class="muted">(Synced)</small>
+            </header>
+            <textarea id="notepad-content" style="height: 300px; resize: vertical; font-family: monospace;"
+                placeholder="Type here to share..."></textarea>
+            <footer>
+                <div class="grid">
+                    <div>
+                        <button class="outline" id="btn-copy" onclick="copyToClipboard()">Copy</button>
+                        <button class="outline" onclick="pasteFromClipboard()">Paste</button>
+                    </div>
+                    <div>
+                        <!-- Status is in header, but maybe clear button? -->
+                        <button class="secondary"
+                            onclick="document.getElementById('notepad-content').value=''; document.getElementById('notepad-content').dispatchEvent(new Event('input'))">Clear</button>
+                    </div>
+                </div>
+            </footer>
+        </article>
+    </dialog>
+
     <script>
         // Upload Handler (Simple version)
         async function handleUpload(files) {
@@ -72,15 +107,16 @@
             const urlParams = new URLSearchParams(window.location.search);
             // This is tricky in SPA. Ideally we track currentPath in a variable or read it from URL.
             // For now, let's assume the URL reflects the path: /list/subdir/
-             const fullPath = window.location.pathname.replace('/list', '') || '/';
-             
-             // ... Upload logic (reusing logic from previous version slightly modified for SPA)
-             // For this MVP, let's just alert
-             alert(`Uploading ${files.length} files to ${fullPath}... (Implementation pending completion of full migration)`);
-             
-             // ACTUAL IMPLEMENTATION todo: call /upload endpoint.
+            const fullPath = window.location.pathname.replace('/list', '') || '/';
+
+            // ... Upload logic (reusing logic from previous version slightly modified for SPA)
+            // For this MVP, let's just alert
+            alert(`Uploading ${files.length} files to ${fullPath}... (Implementation pending completion of full migration)`);
+
+            // ACTUAL IMPLEMENTATION todo: call /upload endpoint.
         }
     </script>
+    <script src="/assets/js/clipboard.js"></script>
     <script src="/assets/js/app.js"></script>
     <script>
         // Initial Data Injection Placeholder
@@ -88,4 +124,5 @@
         window.INITIAL_DATA = __INITIAL_DATA__; 
     </script>
 </body>
+
 </html>

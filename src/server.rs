@@ -1,8 +1,7 @@
 use axum::{middleware, routing::get, Router};
 use axum_server::tls_rustls::RustlsConfig;
 use clap::Parser;
-use std::{net::SocketAddr, path::PathBuf, sync::Arc};
-
+use std::{net::SocketAddr, path::PathBuf, sync::{Arc, RwLock}};
 
 use crate::{auth, routes};
 
@@ -57,6 +56,7 @@ pub struct AppState {
     pub base_path: PathBuf,
     pub max_upload_size: u64,
     pub theme_path: Option<PathBuf>,
+    pub clipboard: Arc<RwLock<String>>,
 }
 
 async fn get_tls_config(args: &Args) -> Option<RustlsConfig> {
@@ -105,6 +105,7 @@ pub async fn start_server(args: Args) {
         base_path: base_path.clone(),
         max_upload_size: args.max_upload_size * 1024 * 1024, // Convertir a bytes
         theme_path: args.theme.clone(),
+        clipboard: Arc::new(RwLock::new(String::new())),
     });
 
     let mut app = Router::new()
